@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/upn_black"
+    android:padding="24dp">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardLogo"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        app:cardBackgroundColor="@color/text_white"
+        app:cardCornerRadius="70dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/tvBienvenido"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.3"
+        app:layout_constraintVertical_chainStyle="packed">
+
+        <ImageView
+            android:id="@+id/imgLogoUPN"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="25dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/upn_logo" />
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:id="@+id/tvBienvenido"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="¡BIENVENIDO!"
+        android:textColor="@color/text_white"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/tvInstruccion"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cardLogo" />
+
+    <TextView
+        android:id="@+id/tvInstruccion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Ingresa tu cuenta para continuar"
+        android:textColor="@color/text_gray"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@+id/etCodigoLogin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvBienvenido" />
+
+    <EditText
+        android:id="@+id/etCodigoLogin"
+        android:layout_width="0dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/bg_edittext_yellow"
+        android:hint="Código UPN"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="@color/text_white"
+        android:textColorHint="@color/upn_yellow"
+        android:maxLines="1"
+        android:inputType="text"
+        android:imeOptions="actionNext"
+        app:layout_constraintBottom_toTopOf="@+id/etPasswordLogin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvInstruccion" />
+
+    <EditText
+        android:id="@+id/etPasswordLogin"
+        android:layout_width="0dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_edittext_yellow"
+        android:hint="Contraseña"
+        android:inputType="textPassword"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="@color/text_white"
+        android:textColorHint="@color/upn_yellow"
+        android:maxLines="1"
+        android:imeOptions="actionDone"
+        app:layout_constraintBottom_toTopOf="@+id/btnIniciarSesion"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etCodigoLogin" />
+
+    <Button
+        android:id="@+id/btnIniciarSesion"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="32dp"
+        android:backgroundTint="@color/upn_yellow"
+        android:text="INICIAR SESIÓN"
+        android:textColor="@color/pure_black"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/btnIrRegistro"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etPasswordLogin" />
+
+    <Button
+        android:id="@+id/btnIrRegistro"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/upn_black"
+        android:text="REGISTRARSE"
+        android:textColor="@color/upn_yellow"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnIniciarSesion"
+        app:strokeColor="@color/upn_yellow"
+        app:strokeWidth="2dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

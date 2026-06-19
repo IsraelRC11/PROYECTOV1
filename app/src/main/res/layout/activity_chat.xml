@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/upn_black">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutHeaderChat"
+        android:layout_width="match_parent"
+        android:layout_height="105dp"
+        android:background="#0A0A0A"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="36dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/btnRegresarChat"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:contentDescription="Regresar"
+            android:src="@drawable/ic_arrow_back"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/text_white" />
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivChatFotoUsuario"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="12dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/usuario"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btnRegresarChat"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
+
+        <TextView
+            android:id="@+id/tvChatNombreUsuario"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Cargando..."
+            android:textColor="@color/text_white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/tvChatEstado"
+            app:layout_constraintEnd_toStartOf="@+id/btnFinalizarAsesoria"
+            app:layout_constraintStart_toEndOf="@id/ivChatFotoUsuario"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <TextView
+            android:id="@+id/tvChatEstado"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Cargando..."
+            android:textColor="@color/text_gray"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/tvChatNombreUsuario"
+            app:layout_constraintStart_toStartOf="@id/tvChatNombreUsuario"
+            app:layout_constraintTop_toBottomOf="@id/tvChatNombreUsuario" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFinalizarAsesoria"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:contentDescription="Finalizar asesoría"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="12dp"
+            android:text="TERMINAR"
+            android:textColor="@color/pure_black"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:backgroundTint="@color/upn_yellow"
+            app:cornerRadius="6dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChatMensajes"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:padding="16dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintBottom_toTopOf="@id/layoutControlEnviar"
+        app:layout_constraintTop_toBottomOf="@id/layoutHeaderChat" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutControlEnviar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#0A0A0A"
+        android:paddingHorizontal="12dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="40dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <EditText
+            android:id="@+id/etMensajeTexto"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_edittext_yellow"
+            android:backgroundTint="#121212"
+            android:hint="Escribe un mensaje..."
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxHeight="100dp"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/text_gray"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnEnviarMensaje"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnEnviarMensaje"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Enviar mensaje"
+            android:src="@drawable/enviarmensaje"
+            app:backgroundTint="@color/upn_yellow"
+            app:fabCustomSize="45dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/pure_black" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

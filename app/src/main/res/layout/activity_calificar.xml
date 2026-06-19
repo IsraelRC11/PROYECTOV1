@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/upn_black"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:id="@+id/containerCentral"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/layoutBotonesCalificar"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.4">
+
+        <TextView
+            android:id="@+id/tvTituloCalificar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CALIFICAR ASESORÍA"
+            android:textColor="@color/text_white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="32dp"
+            app:cardBackgroundColor="#1A1A1A"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:id="@+id/ivFotoCalificar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/usuario"
+                app:tint="@color/text_gray" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/tvNombreProfCalificar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Ing. Carlos Castro"
+            android:textColor="@color/text_white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvCursoCalificar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cálculo I"
+            android:textColor="@color/upn_yellow"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:text="¿Cómo fue tu experiencia?"
+            android:textColor="@color/text_white"
+            android:textSize="15sp" />
+
+        <RatingBar
+            android:id="@+id/rbCalificacion"
+            style="@android:style/Widget.Material.RatingBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:numStars="5"
+            android:progressTint="@color/upn_yellow"
+            android:rating="0"
+            android:scaleX="1.1"
+            android:scaleY="1.1"
+            android:stepSize="1" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutBotonesCalificar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOmitir"
+            android:layout_width="0dp"
+            android:layout_height="55dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:text="OMITIR"
+            android:textColor="@color/upn_yellow"
+            app:backgroundTint="@color/upn_black"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/upn_yellow"
+            app:strokeWidth="2dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEnviarCalificacion"
+            android:layout_width="0dp"
+            android:layout_height="55dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="ENVIAR"
+            android:textColor="@color/pure_black"
+            android:textStyle="bold"
+            app:backgroundTint="@color/upn_yellow"
+            app:cornerRadius="12dp" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

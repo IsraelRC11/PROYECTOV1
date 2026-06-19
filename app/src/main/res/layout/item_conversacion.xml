@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/upn_black"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:paddingHorizontal="24dp"
+    android:paddingVertical="16dp">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivItemFoto"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/usuario"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Circular" />
+
+    <TextView
+        android:id="@+id/tvItemNombre"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="Cargando..."
+        android:textColor="@color/text_white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/tvItemHora"
+        app:layout_constraintStart_toEndOf="@id/ivItemFoto"
+        app:layout_constraintTop_toTopOf="@id/ivItemFoto" />
+
+    <TextView
+        android:id="@+id/tvItemUltimoMensaje"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="16dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="..."
+        android:textColor="@color/text_gray"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/tvContadorNoLeidos"
+        app:layout_constraintStart_toEndOf="@id/ivItemFoto"
+        app:layout_constraintTop_toBottomOf="@id/tvItemNombre" />
+
+    <TextView
+        android:id="@+id/tvItemHora"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--:--"
+        android:textColor="@color/text_gray"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvItemNombre" />
+
+    <TextView
+        android:id="@+id/tvContadorNoLeidos"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="4dp"
+        android:background="@android:drawable/presence_online"
+        android:backgroundTint="@color/upn_yellow"
+        android:gravity="center"
+        android:text="0"
+        android:textColor="@color/pure_black"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvItemHora" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#121212"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="16dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "153977767555",
+    "project_id": "asesoria-upn",
+    "storage_bucket": "asesoria-upn.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:153977767555:android:68fdb52144d845ac8c3db6",
+        "android_client_info": {
+          "package_name": "empresa.android.proyectov1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnDuu3Q8XuAKk4iOcfSLgKpVPwclHlEwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

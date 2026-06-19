@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PROYECTOV1</string>
+    <string name="perfil_titulo">COMPLETAR PERFIL</string>
+    <string name="subir_foto">Subir Foto</string>
+    <string name="hint_nombre">Nombre</string>
+    <string name="hint_apellido">Apellido</string>
+    <string name="hint_codigo_upn">Código UPN</string>
+    <string name="mis_intereses">MIS INTERESES</string>
+    <string name="interes_calculo">Cálculo</string>
+    <string name="interes_java">Java</string>
+    <string name="interes_fisica">Física</string>
+    <string name="interes_algoritmos">Algoritmos</string>
+    <string name="btn_guardar_cambios">GUARDAR CAMBIOS</string>
+    <string name="sexo_titulo">SEXO</string>
+    <string name="sexo_masculino">Masculino</string>
+    <string name="sexo_femenino">Femenino</string>
+    <string name="sexo_no_decir">Prefiero no decirlo</string>
+    <string name="seleccion_rol_titulo">SELECCIONA TU ROL</string>
+    <string name="seleccion_rol_descripcion">Escoge cómo deseas continuar</string>
+    <string name="rol_estudiante">ESTUDIANTE</string>
+    <string name="rol_profesor">PROFESOR</string>
+</resources>
