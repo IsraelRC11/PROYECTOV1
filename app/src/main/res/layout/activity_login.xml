@@ -6,28 +6,19 @@
     android:background="@color/upn_black"
     android:padding="24dp">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardLogo"
+    <!-- LOGO CORREGIDO: Sin CardView blanco, usando el recurso redondo nativo -->
+    <ImageView
+        android:id="@+id/imgLogoUPN"
         android:layout_width="140dp"
         android:layout_height="140dp"
-        app:cardBackgroundColor="@color/text_white"
-        app:cardCornerRadius="70dp"
-        app:cardElevation="0dp"
+        android:scaleType="fitCenter"
+        android:src="@mipmap/splash_logo_upn"
         app:layout_constraintBottom_toTopOf="@+id/tvBienvenido"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.3"
-        app:layout_constraintVertical_chainStyle="packed">
-
-        <ImageView
-            android:id="@+id/imgLogoUPN"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="25dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/upn_logo" />
-    </androidx.cardview.widget.CardView>
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
         android:id="@+id/tvBienvenido"
@@ -41,7 +32,7 @@
         app:layout_constraintBottom_toTopOf="@+id/tvInstruccion"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardLogo" />
+        app:layout_constraintTop_toBottomOf="@+id/imgLogoUPN" />
 
     <TextView
         android:id="@+id/tvInstruccion"

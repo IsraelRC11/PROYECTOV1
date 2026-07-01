@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PROYECTOV1</string>
+    <string name="app_name">ASESORIA-UPN</string>
     <string name="perfil_titulo">COMPLETAR PERFIL</string>
     <string name="subir_foto">Subir Foto</string>
     <string name="hint_nombre">Nombre</string>

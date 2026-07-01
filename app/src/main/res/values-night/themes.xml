@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.PROYECTOV1" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">#000000</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@mipmap/splash_logo_upn</item>
+        <item name="android:windowSplashScreenIconBackgroundColor" tools:targetApi="31">#FBB900</item>
     </style>
 </resources>

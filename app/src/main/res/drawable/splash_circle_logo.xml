@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Círculo de fondo perfecto -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FBB900" />
+            <size android:width="180dp" android:height="180dp"/>
+        </shape>
+    </item>
+    <!-- Logo centrado y protegido contra estiramientos -->
+    <item>
+        <bitmap
+            android:src="@drawable/upn_logo"
+            android:gravity="center" />
+    </item>
+</layer-list>
