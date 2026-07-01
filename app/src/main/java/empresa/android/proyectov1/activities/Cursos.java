@@ -2,8 +2,11 @@ package empresa.android.proyectov1.activities;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,18 +19,30 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import empresa.android.proyectov1.R;
 
 public class Cursos extends AppCompatActivity {
-    private ChipGroup cg;
+    private LinearLayout contenedorCategorias; // Cambiado a LinearLayout para recibir los bloques verticales
     private String rol;
     private Button btnGuardar, btnCancelar;
     private String uid;
     private String nodo;
-    private String[] lista = {"Cálculo I", "Cálculo II", "Java Core", "Algoritmos", "Física I", "Base de Datos"};
+
+    // BANCO DE DATOS EQUILIBRADO PARA TODA LA UNIVERSIDAD
+    private final Map<String, String[]> mapaCursos = new HashMap<String, String[]>() {{
+        put("CIENCIAS Y MATEMÁTICA", new String[]{"Complemento de Matemática", "Matemática Básica", "Física General", "Química General", "Estadística General"});
+        put("NEGOCIOS Y MARKETING", new String[]{"Economía General", "Administración para Negocios", "Fundamentos de Marketing", "Contabilidad Básica"});
+        put("LETRAS Y HUMANIDADES", new String[]{"Comunicación I", "Comunicación II", "Metodología de la Investigación", "Realidad Nacional", "Introducción al Derecho"});
+        put("TECNOLOGÍA Y HERRAMIENTAS", new String[]{"Herramientas Informáticas", "Introducción a la Programación", "Diseño Gráfico Básico"});
+        put("SALUD Y BIENESTAR", new String[]{"Biología General", "Nutrición y Salud", "Psicología de la Felicidad", "Primeros Auxilios"});
+    }};
+
     private ColorStateList bgList, textList;
+    private final List<Chip> todosLosChips = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,12 +52,12 @@ public class Cursos extends AppCompatActivity {
 
         if (rol != null && rol.equals("profesor")) {
             setContentView(R.layout.activity_especialidades);
-            cg = findViewById(R.id.cgEspecialidades);
+            contenedorCategorias = findViewById(R.id.cgEspecialidades); // Vincula al LinearLayout interno del ScrollView
             btnGuardar = findViewById(R.id.btnGuardarEspecialidades);
             btnCancelar = findViewById(R.id.btnCancelarEspecialidades);
         } else {
             setContentView(R.layout.activity_intereses);
-            cg = findViewById(R.id.cgIntereses);
+            contenedorCategorias = findViewById(R.id.cgIntereses); // Vincula al LinearLayout interno del ScrollView
             btnGuardar = findViewById(R.id.btnGuardarIntereses);
             btnCancelar = findViewById(R.id.btnCancelarIntereses);
         }
@@ -57,8 +72,7 @@ public class Cursos extends AppCompatActivity {
 
         btnGuardar.setOnClickListener(v -> {
             List<String> sel = new ArrayList<>();
-            for (int i = 0; i < cg.getChildCount(); i++) {
-                Chip c = (Chip) cg.getChildAt(i);
+            for (Chip c : todosLosChips) {
                 if (c.isChecked()) {
                     sel.add(c.getText().toString());
                 }
@@ -111,32 +125,58 @@ public class Cursos extends AppCompatActivity {
                                 }
                             }
                         }
-                        pintentarChips(preseleccionados);
+                        pintarChipsCategorizados(preseleccionados);
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        pintentarChips(new ArrayList<>());
+                        pintarChipsCategorizados(new ArrayList<>());
                     }
                 });
     }
 
-    private void pintentarChips(List<String> preseleccionados) {
-        cg.removeAllViews();
-        for (String s : lista) {
-            Chip c = new Chip(this);
-            c.setText(s);
-            c.setCheckable(true);
-            c.setChipBackgroundColor(bgList);
-            c.setTextColor(textList);
-            c.setChipStrokeColorResource(R.color.upn_yellow);
-            c.setChipStrokeWidth(3f);
+    // CORREGIDO: Inyecta los títulos y sub-grupos de chips de manera limpia dentro del scroll nativo
+    private void pintarChipsCategorizados(List<String> preseleccionados) {
+        contenedorCategorias.removeAllViews();
+        todosLosChips.clear();
 
-            if (preseleccionados.contains(s)) {
-                c.setChecked(true);
+        for (Map.Entry<String, String[]> area : mapaCursos.entrySet()) {
+
+            // 1. Título de la categoría
+            TextView tvCategoria = new TextView(this);
+            tvCategoria.setText(area.getKey());
+            tvCategoria.setTextSize(13f);
+            tvCategoria.setTypeface(null, Typeface.BOLD);
+            tvCategoria.setTextColor(ContextCompat.getColor(this, R.color.upn_yellow));
+            tvCategoria.setPadding(10, 24, 0, 12);
+            contenedorCategorias.addView(tvCategoria);
+
+            // 2. Grupo de chips exclusivo para la categoría (Flexbox horizontal nativo)
+            ChipGroup subGrupo = new ChipGroup(this);
+            subGrupo.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            subGrupo.setChipSpacingHorizontal(16);
+            subGrupo.setChipSpacingVertical(12);
+
+            // 3. Inyección de chips individuales
+            for (String curso : area.getValue()) {
+                Chip c = new Chip(this);
+                c.setText(curso);
+                c.setCheckable(true);
+                c.setChipBackgroundColor(bgList);
+                c.setTextColor(textList);
+                c.setChipStrokeColorResource(R.color.upn_yellow);
+                c.setChipStrokeWidth(3f);
+
+                if (preseleccionados.contains(curso)) {
+                    c.setChecked(true);
+                }
+
+                subGrupo.addView(c);
+                todosLosChips.add(c);
             }
 
-            cg.addView(c);
+            contenedorCategorias.addView(subGrupo);
         }
     }
 }

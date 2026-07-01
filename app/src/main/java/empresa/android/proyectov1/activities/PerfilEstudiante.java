@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -40,6 +41,7 @@ public class PerfilEstudiante extends AppCompatActivity {
     private DatabaseReference mDatabase;
     private String uid;
     private ActivityResultLauncher<Intent> galleryLauncher;
+    private ValueEventListener badgeValueListener; // Referencia para desenganchar el listener
 
     // Variables locales para almacenar y precargar datos en el diálogo
     private String nombreActual = "", apellidoActual = "";
@@ -54,7 +56,7 @@ public class PerfilEstudiante extends AppCompatActivity {
 
         ivPerfil = findViewById(R.id.ivPerfilFoto);
         tvNombre = findViewById(R.id.tvPerfilNombreCompleto);
-        btnEditarDatos = findViewById(R.id.btnEditarDatosPersonales); // Enlazado al lápiz amarillo
+        btnEditarDatos = findViewById(R.id.btnEditarDatosPersonales);
         btnEditPass = findViewById(R.id.btnEditPass);
         btnLogout = findViewById(R.id.btnLogOut);
         btnIntereses = findViewById(R.id.btnEditIntereses);
@@ -62,6 +64,7 @@ public class PerfilEstudiante extends AppCompatActivity {
         fabActualizar = findViewById(R.id.fabActualizarFoto);
 
         obtenerDatosEstudiante();
+        configurarBadgeMensajesGlobal(); // NUEVO: Escucha reactiva del badge global
 
         galleryLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -82,10 +85,7 @@ public class PerfilEstudiante extends AppCompatActivity {
             galleryLauncher.launch(intent);
         });
 
-        // Evento para abrir el diálogo de editar nombres/apellidos
         btnEditarDatos.setOnClickListener(v -> mostrarDialogoEditarPerfil());
-
-        // Evento para abrir el diálogo de cambio de contraseña
         btnEditPass.setOnClickListener(v -> mostrarDialogoCambiarContrasena());
 
         btnIntereses.setOnClickListener(v -> {
@@ -103,6 +103,44 @@ public class PerfilEstudiante extends AppCompatActivity {
         });
 
         configurarNavegacion();
+    }
+
+    // NUEVO MÉTODO: Sincroniza las salas únicas con pendientes en la barra inferior
+    private void configurarBadgeMensajesGlobal() {
+        if (uid == null) return;
+
+        badgeValueListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int salasConMensajesNuevos = 0;
+
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    String idSala = ds.getKey();
+                    if (idSala != null && idSala.contains(uid)) {
+                        Long misPendientes = ds.child("noLeidos_" + uid).getValue(Long.class);
+                        if (misPendientes != null && misPendientes > 0) {
+                            salasConMensajesNuevos++;
+                        }
+                    }
+                }
+
+                if (bottomNav != null) {
+                    BadgeDrawable badge = bottomNav.getOrCreateBadge(R.id.nav_chats);
+                    if (salasConMensajesNuevos > 0) {
+                        badge.setVisible(true);
+                        badge.setNumber(salasConMensajesNuevos);
+                        badge.setBackgroundColor(getResources().getColor(R.color.upn_yellow));
+                        badge.setBadgeTextColor(getResources().getColor(R.color.upn_black));
+                    } else {
+                        bottomNav.removeBadge(R.id.nav_chats);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+        mDatabase.child("Chats").addValueEventListener(badgeValueListener);
     }
 
     private void obtenerDatosEstudiante() {
@@ -208,7 +246,6 @@ public class PerfilEstudiante extends AppCompatActivity {
                 return;
             }
 
-            // Cambiar contraseña nativa en Firebase Authentication
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user != null) {
                 btnGuardar.setEnabled(false);
@@ -282,5 +319,13 @@ public class PerfilEstudiante extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         mDatabase.child("Usuarios").child(uid).child("estado").setValue("offline");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (badgeValueListener != null) {
+            mDatabase.child("Chats").removeEventListener(badgeValueListener);
+        }
     }
 }

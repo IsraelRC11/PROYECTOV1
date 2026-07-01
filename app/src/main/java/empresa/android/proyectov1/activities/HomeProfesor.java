@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -42,6 +43,7 @@ public class HomeProfesor extends AppCompatActivity {
 
     private DatabaseReference mDatabase;
     private String uidLogueado;
+    private ValueEventListener badgeValueListener; // Referencia para desenganchar el listener
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +56,7 @@ public class HomeProfesor extends AppCompatActivity {
         initViews();
         cargarDatosYEstadisticas();
         cargarDisponibilidadHoraria();
+        configurarBadgeMensajesGlobal(); // NUEVO: Escucha global de chats con mensajes nuevos
         configurarNavegacion();
     }
 
@@ -67,6 +70,44 @@ public class HomeProfesor extends AppCompatActivity {
         barChartReunionesMensuales = findViewById(R.id.barChartReunionesMensuales);
 
         inicializarEstructuraGraficos();
+    }
+
+    // NUEVO MÉTODO: Cuenta salas únicas con pendientes y actualiza el BottomNav reactivamente
+    private void configurarBadgeMensajesGlobal() {
+        if (uidLogueado == null) return;
+
+        badgeValueListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int salasConMensajesNuevos = 0;
+
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    String idSala = ds.getKey();
+                    if (idSala != null && idSala.contains(uidLogueado)) {
+                        Long misPendientes = ds.child("noLeidos_" + uidLogueado).getValue(Long.class);
+                        if (misPendientes != null && misPendientes > 0) {
+                            salasConMensajesNuevos++;
+                        }
+                    }
+                }
+
+                if (bottomNav != null) {
+                    BadgeDrawable badge = bottomNav.getOrCreateBadge(R.id.nav_chats);
+                    if (salasConMensajesNuevos > 0) {
+                        badge.setVisible(true);
+                        badge.setNumber(salasConMensajesNuevos);
+                        badge.setBackgroundColor(getResources().getColor(R.color.upn_yellow));
+                        badge.setBadgeTextColor(getResources().getColor(R.color.upn_black));
+                    } else {
+                        bottomNav.removeBadge(R.id.nav_chats);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+        mDatabase.child("Chats").addValueEventListener(badgeValueListener);
     }
 
     private void inicializarEstructuraGraficos() {
@@ -105,19 +146,16 @@ public class HomeProfesor extends AppCompatActivity {
                         long completadas = stats.child("citasCompletadas").getValue(Long.class) != null ? stats.child("citasCompletadas").getValue(Long.class) : 0;
                         float sumaCalificaciones = stats.child("sumaCalificaciones").getValue(Float.class) != null ? stats.child("sumaCalificaciones").getValue(Float.class) : 0f;
 
-                        // Promedio de estrellas real
                         float promedioEstrellas = completadas > 0 ? (sumaCalificaciones / completadas) : 0f;
                         float porcentajeAprobacion = (promedioEstrellas / 5.0f) * 100f;
 
                         tvSesiones.setText(String.valueOf(completadas));
                         actualizarGraficoCircular(porcentajeAprobacion);
                     } else {
-                        // CORREGIDO: Si el profesor es nuevo y no tiene historial, inicia en 0% y 0 sesiones
                         actualizarGraficoCircular(0f);
                         tvSesiones.setText("0");
                     }
 
-                    // Cargar el gráfico de barras
                     cargarHistorialReunionesMensuales(snapshot.child("historialMensual"));
                 }
             }
@@ -150,7 +188,6 @@ public class HomeProfesor extends AppCompatActivity {
     private void cargarHistorialReunionesMensuales(DataSnapshot historialSnapshot) {
         ArrayList<BarEntry> entradasBarras = new ArrayList<>();
 
-        // Recorremos los 12 meses del año actual
         for (int i = 0; i < 12; i++) {
             float cantidadSesionesMes = 0f;
             if (historialSnapshot.exists() && historialSnapshot.hasChild(String.valueOf(i))) {
@@ -280,5 +317,13 @@ public class HomeProfesor extends AppCompatActivity {
             }
             return id == R.id.nav_home;
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (badgeValueListener != null) {
+            mDatabase.child("Chats").removeEventListener(badgeValueListener);
+        }
     }
 }

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
@@ -65,29 +66,30 @@ public class Mensajes extends AppCompatActivity {
 
         mDatabase.child("Usuarios").child(uidLogueado).child("role")
                 .get().addOnCompleteListener(task -> {
-                    // Intento dinámico secundario de respaldo por compatibilidad
                     if(task.isSuccessful() && task.getResult().exists()){
                         rolUsuario = task.getResult().getValue(String.class);
-                        chatAdapter = new ChatAdapter(listaChatsFiltrada, rolUsuario);
-                        rvChats.setAdapter(chatAdapter);
+                        actualizarAdapter();
                         cargarListaChats();
                         return;
                     }
 
-                    // Listener por defecto
                     mDatabase.child("Usuarios").child(uidLogueado).child("rol")
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                                     rolUsuario = snapshot.getValue(String.class);
-                                    chatAdapter = new ChatAdapter(listaChatsFiltrada, rolUsuario);
-                                    rvChats.setAdapter(chatAdapter);
+                                    actualizarAdapter();
                                     cargarListaChats();
                                 }
                                 @Override
                                 public void onCancelled(@NonNull DatabaseError error) {}
                             });
                 });
+    }
+
+    private void actualizarAdapter() {
+        chatAdapter = new ChatAdapter(listaChatsFiltrada, rolUsuario);
+        rvChats.setAdapter(chatAdapter);
     }
 
     private void cargarListaChats() {
@@ -98,6 +100,7 @@ public class Mensajes extends AppCompatActivity {
                 if (!snapshot.exists()) {
                     listaChatsFiltrada.clear();
                     chatAdapter.notifyDataSetChanged();
+                    actualizarBadgeGlobal(); // Limpiar badge si no hay chats
                     return;
                 }
 
@@ -115,6 +118,9 @@ public class Mensajes extends AppCompatActivity {
                             chat.setIdChat(idSala);
                             chat.setIdReceptor(idReceptor);
 
+                            Long misPendientes = ds.child("noLeidos_" + uidLogueado).getValue(Long.class);
+                            chat.setMensajesNoLeidos(misPendientes != null ? misPendientes.intValue() : 0);
+
                             mDatabase.child("Usuarios").child(idReceptor)
                                     .addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
@@ -125,39 +131,19 @@ public class Mensajes extends AppCompatActivity {
                                                 chat.setNombreReceptor(nombre + " " + apellido);
                                                 chat.setFotoReceptor(userSnapshot.child("fotoUrl").getValue(String.class));
 
-                                                mDatabase.child("Mensajes").child(idSala)
-                                                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                                                            @Override
-                                                            public void onDataChange(@NonNull DataSnapshot mensajesSnapshot) {
-                                                                int contadorPendientes = 0;
-                                                                for (DataSnapshot msgSnap : mensajesSnapshot.getChildren()) {
-                                                                    String emisorMsg = msgSnap.child("emisorUid").getValue(String.class);
-                                                                    Boolean leido = msgSnap.child("leido").getValue(Boolean.class);
-
-                                                                    if (emisorMsg != null && !emisorMsg.equals(uidLogueado)) {
-                                                                        if (leido == null || !leido) {
-                                                                            contadorPendientes++;
-                                                                        }
-                                                                    }
-                                                                }
-
-                                                                chat.setMensajesNoLeidos(contadorPendientes);
-
-                                                                listaChats.remove(chat);
-                                                                listaChats.add(chat);
-
-                                                                chatsProcesados[0]++;
-                                                                if (chatsProcesados[0] <= totalChats) {
-                                                                    realizarFiltradoYOrdenamiento(etBuscar.getText().toString());
-                                                                }
-                                                            }
-                                                            @Override public void onCancelled(@NonNull DatabaseError error) {}
-                                                        });
-                                            } else {
-                                                chatsProcesados[0]++;
+                                                listaChats.remove(chat);
+                                                listaChats.add(chat);
+                                            }
+                                            chatsProcesados[0]++;
+                                            if (chatsProcesados[0] >= totalChats) {
+                                                realizarFiltradoYOrdenamiento(etBuscar.getText().toString());
+                                                actualizarBadgeGlobal(); // Refrescar el contador de la barra inferior
                                             }
                                         }
-                                        @Override public void onCancelled(@NonNull DatabaseError e) { chatsProcesados[0]++; }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError e) {
+                                            chatsProcesados[0]++;
+                                        }
                                     });
                         } else {
                             chatsProcesados[0]++;
@@ -166,10 +152,37 @@ public class Mensajes extends AppCompatActivity {
                         chatsProcesados[0]++;
                     }
                 }
+
+                if (totalChats == 0 || chatsProcesados[0] >= totalChats) {
+                    realizarFiltradoYOrdenamiento(etBuscar.getText().toString());
+                    actualizarBadgeGlobal();
+                }
             }
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         };
         mDatabase.child("Chats").addValueEventListener(chatsValueListener);
+    }
+
+    // CORREGIDO: Cuenta salas/chats únicos con mensajes nuevos en vez de acumular el total de textos
+    private void actualizarBadgeGlobal() {
+        int salasConMensajesNuevos = 0;
+        for (ChatModel chat : listaChats) {
+            if (chat.getMensajesNoLeidos() > 0) {
+                salasConMensajesNuevos++;
+            }
+        }
+
+        BadgeDrawable badge = bottomNav.getOrCreateBadge(R.id.nav_chats);
+
+        if (salasConMensajesNuevos > 0) {
+            badge.setVisible(true);
+            badge.setNumber(salasConMensajesNuevos);
+            // Estética acoplada a tu paleta Starboy/UPN
+            badge.setBackgroundColor(getResources().getColor(R.color.upn_yellow));
+            badge.setBadgeTextColor(getResources().getColor(R.color.upn_black));
+        } else {
+            bottomNav.removeBadge(R.id.nav_chats);
+        }
     }
 
     private void configurarBuscador() {

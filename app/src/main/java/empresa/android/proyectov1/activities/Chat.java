@@ -37,7 +37,8 @@ public class Chat extends AppCompatActivity {
 
     private MensajeAdapter mensajeAdapter;
     private List<MensajeModel> listaMensajes;
-    private ValueEventListener chatStatusListener; // Guardamos referencia para poder removerlo
+    private ValueEventListener chatStatusListener;
+    private ChildEventListener mensajesListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +96,7 @@ public class Chat extends AppCompatActivity {
     }
 
     private void cargarMensajes() {
-        mDatabase.child("Mensajes").child(idChat).addChildEventListener(new ChildEventListener() {
+        mensajesListener = mDatabase.child("Mensajes").child(idChat).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 MensajeModel msg = snapshot.getValue(MensajeModel.class);
@@ -106,6 +107,7 @@ public class Chat extends AppCompatActivity {
 
                     if (msg.getEmisorUid() != null && !msg.getEmisorUid().equals(idEmisor)) {
                         snapshot.getRef().child("leido").setValue(true);
+                        mDatabase.child("Chats").child(idChat).child("noLeidos_" + idEmisor).setValue(0);
                     }
                 }
             }
@@ -139,6 +141,8 @@ public class Chat extends AppCompatActivity {
             }
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
+
+        mDatabase.child("Chats").child(idChat).child("noLeidos_" + idEmisor).setValue(0);
     }
 
     private boolean updatesIsEmpty(Map<String, Object> map) {
@@ -165,12 +169,26 @@ public class Chat extends AppCompatActivity {
                     .addOnSuccessListener(aVoid -> {
                         etMensaje.setText("");
 
-                        Map<String, Object> updateChat = new HashMap<>();
-                        updateChat.put("ultimoMensaje", texto);
-                        updateChat.put("timestamp", tiempo);
-                        updateChat.put("estado", "activo"); // Al mandar mensaje, vuelve a estar activo
+                        mDatabase.child("Chats").child(idChat).child("noLeidos_" + idReceptor)
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        long pendientesReceptor = 0;
+                                        if(snapshot.exists() && snapshot.getValue() != null){
+                                            pendientesReceptor = (long) snapshot.getValue();
+                                        }
 
-                        mDatabase.child("Chats").child(idChat).updateChildren(updateChat);
+                                        Map<String, Object> updateChat = new HashMap<>();
+                                        updateChat.put("ultimoMensaje", texto);
+                                        updateChat.put("timestamp", tiempo);
+                                        updateChat.put("estado", "activo");
+                                        updateChat.put("emisorUid", idEmisor); // MODIFICADO: Registramos quién envió el último mensaje
+                                        updateChat.put("noLeidos_" + idReceptor, pendientesReceptor + 1);
+
+                                        mDatabase.child("Chats").child(idChat).updateChildren(updateChat);
+                                    }
+                                    @Override public void onCancelled(@NonNull DatabaseError error) {}
+                                });
                     });
         }
     }
@@ -208,7 +226,6 @@ public class Chat extends AppCompatActivity {
                 if (snapshot.exists()) {
                     String estado = snapshot.getValue(String.class);
                     if ("finalizado".equals(estado) && "estudiante".equals(rolUsuario)) {
-                        // Desenganchamos el listener antes de saltar para evitar ejecuciones en bucle
                         mDatabase.child("Chats").child(idChat).child("estado").removeEventListener(chatStatusListener);
                         abrirCalificacion();
                     }
@@ -230,9 +247,7 @@ public class Chat extends AppCompatActivity {
     }
 
     private void abrirCalificacion() {
-        // CORREGIDO: Actualizamos el estado de la sala a 'leido' para que al volver a abrir el chat no te lance la interfaz otra vez
         mDatabase.child("Chats").child(idChat).child("estado").setValue("leido");
-
         Intent i = new Intent(this, Calificar.class);
         i.putExtra("idProfesor", idReceptor);
         i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -245,6 +260,9 @@ public class Chat extends AppCompatActivity {
         super.onDestroy();
         if (chatStatusListener != null) {
             mDatabase.child("Chats").child(idChat).child("estado").removeEventListener(chatStatusListener);
+        }
+        if (mensajesListener != null) {
+            mDatabase.child("Mensajes").child(idChat).removeEventListener(mensajesListener);
         }
     }
 

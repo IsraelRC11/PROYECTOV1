@@ -1,6 +1,8 @@
 package empresa.android.proyectov1.adapters;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.firebase.auth.FirebaseAuth;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -20,9 +23,8 @@ import empresa.android.proyectov1.models.ChatModel;
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
     private List<ChatModel> chatList;
-    private String rolUsuarioActual; // Guarda el rol del usuario logueado
+    private String rolUsuarioActual;
 
-    // Constructor corregido para recibir el rol dinámico
     public ChatAdapter(List<ChatModel> chatList, String rolUsuarioActual) {
         this.chatList = chatList;
         this.rolUsuarioActual = rolUsuarioActual;
@@ -38,10 +40,40 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatModel chat = chatList.get(position);
+        Context context = holder.itemView.getContext();
 
         holder.tvNombre.setText(chat.getNombreReceptor());
-        holder.tvUltimoMsg.setText(chat.getUltimoMensaje());
 
+        String ultimoMsg = chat.getUltimoMensaje();
+        String emisorUltimoMsg = chat.getEmisorUid();
+        String miUid = FirebaseAuth.getInstance().getUid();
+
+        // CONTROL REACTIVO DE ESTILOS (NEGRITA Y COLORES)
+        if (ultimoMsg != null && !ultimoMsg.isEmpty()) {
+            if (miUid != null && miUid.equals(emisorUltimoMsg)) {
+                holder.tvUltimoMsg.setText("Tu: " + ultimoMsg);
+                holder.tvUltimoMsg.setTypeface(null, Typeface.NORMAL);
+                holder.tvUltimoMsg.setTextColor(context.getResources().getColor(R.color.text_gray));
+            } else {
+                holder.tvUltimoMsg.setText(ultimoMsg);
+
+                // Si hay mensajes pendientes por leer, se resalta en Blanco y Negrita
+                if (chat.getMensajesNoLeidos() > 0) {
+                    holder.tvUltimoMsg.setTypeface(null, Typeface.BOLD);
+                    holder.tvUltimoMsg.setTextColor(android.graphics.Color.WHITE);
+                } else {
+                    // Si ya los viste, la negrita se remueve y se atenúa a gris
+                    holder.tvUltimoMsg.setTypeface(null, Typeface.NORMAL);
+                    holder.tvUltimoMsg.setTextColor(context.getResources().getColor(R.color.text_gray));
+                }
+            }
+        } else {
+            holder.tvUltimoMsg.setText("Sin mensajes");
+            holder.tvUltimoMsg.setTypeface(null, Typeface.NORMAL);
+            holder.tvUltimoMsg.setTextColor(context.getResources().getColor(R.color.text_gray));
+        }
+
+        // Control de la fecha / hora
         if (chat.getTimestamp() > 0) {
             Calendar cal = Calendar.getInstance(Locale.ENGLISH);
             cal.setTimeInMillis(chat.getTimestamp());
@@ -51,6 +83,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             holder.tvHora.setText("");
         }
 
+        // Control de visibilidad de la burbuja del contador
         if (chat.getMensajesNoLeidos() > 0) {
             holder.tvContador.setVisibility(View.VISIBLE);
             holder.tvContador.setText(String.valueOf(chat.getMensajesNoLeidos()));
@@ -62,7 +95,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         holder.ivFoto.setImageTintList(null);
 
         if (chat.getFotoReceptor() != null && !chat.getFotoReceptor().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
+            Glide.with(context)
                     .load(chat.getFotoReceptor())
                     .placeholder(R.drawable.usuario)
                     .into(holder.ivFoto);
@@ -71,14 +104,12 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), Chat.class);
+            Intent intent = new Intent(context, Chat.class);
             intent.putExtra("idReceptor", chat.getIdReceptor());
             intent.putExtra("nombreReceptor", chat.getNombreReceptor());
             intent.putExtra("fotoReceptor", chat.getFotoReceptor());
-
-            // CORREGIDO: Manda el rol dinámico real a la pantalla de Chat
             intent.putExtra("rol", rolUsuarioActual);
-            v.getContext().startActivity(intent);
+            context.startActivity(intent);
         });
     }
 

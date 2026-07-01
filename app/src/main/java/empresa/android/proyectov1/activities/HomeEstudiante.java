@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -29,6 +30,7 @@ public class HomeEstudiante extends AppCompatActivity {
     private String uidLogueado;
     private List<UsuarioModel> listaProfesores;
     private int indexActual = 0;
+    private ValueEventListener badgeValueListener; // Referencia para desenganchar el listener
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +45,7 @@ public class HomeEstudiante extends AppCompatActivity {
         obtenerDatosEstudiante();
         cargarProfesores();
         verificarCalificacionesPendientes();
+        configurarBadgeMensajesGlobal(); // NUEVO: Escucha global de chats con mensajes nuevos
 
         // Acción del botón de Descartar (X) -> Muestra la siguiente tarjeta
         btnDescartar.setOnClickListener(v -> mostrarSiguienteProfesor());
@@ -75,8 +78,45 @@ public class HomeEstudiante extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottomNavigation);
     }
 
+    // NUEVO MÉTODO: Cuenta salas únicas con pendientes y actualiza el BottomNav reactivamente
+    private void configurarBadgeMensajesGlobal() {
+        if (uidLogueado == null) return;
+
+        badgeValueListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int salasConMensajesNuevos = 0;
+
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    String idSala = ds.getKey();
+                    if (idSala != null && idSala.contains(uidLogueado)) {
+                        Long misPendientes = ds.child("noLeidos_" + uidLogueado).getValue(Long.class);
+                        if (misPendientes != null && misPendientes > 0) {
+                            salasConMensajesNuevos++;
+                        }
+                    }
+                }
+
+                if (bottomNav != null) {
+                    BadgeDrawable badge = bottomNav.getOrCreateBadge(R.id.nav_chats);
+                    if (salasConMensajesNuevos > 0) {
+                        badge.setVisible(true);
+                        badge.setNumber(salasConMensajesNuevos);
+                        badge.setBackgroundColor(getResources().getColor(R.color.upn_yellow));
+                        badge.setBadgeTextColor(getResources().getColor(R.color.upn_black));
+                    } else {
+                        bottomNav.removeBadge(R.id.nav_chats);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+        mDatabase.child("Chats").addValueEventListener(badgeValueListener);
+    }
+
     private void verificarCalificacionesPendientes() {
-        // CORREGIDO: addListenerForSingleValueEvent para que lea UNA sola vez y no se quede en bucle al cambiar de pestañas
         mDatabase.child("CalificacionesPendientes").child(uidLogueado)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -220,5 +260,13 @@ public class HomeEstudiante extends AppCompatActivity {
             }
             return id == R.id.nav_home;
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (badgeValueListener != null) {
+            mDatabase.child("Chats").removeEventListener(badgeValueListener);
+        }
     }
 }
