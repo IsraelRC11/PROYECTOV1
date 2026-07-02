@@ -30,7 +30,7 @@ public class HomeEstudiante extends AppCompatActivity {
     private String uidLogueado;
     private List<UsuarioModel> listaProfesores;
     private int indexActual = 0;
-    private ValueEventListener badgeValueListener; // Referencia para desenganchar el listener
+    private ValueEventListener badgeValueListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,13 +44,10 @@ public class HomeEstudiante extends AppCompatActivity {
         initViews();
         obtenerDatosEstudiante();
         cargarProfesores();
-        verificarCalificacionesPendientes();
-        configurarBadgeMensajesGlobal(); // NUEVO: Escucha global de chats con mensajes nuevos
+        configurarBadgeMensajesGlobal();
 
-        // Acción del botón de Descartar (X) -> Muestra la siguiente tarjeta
         btnDescartar.setOnClickListener(v -> mostrarSiguienteProfesor());
 
-        // Acción del botón de Citar (Check) -> Abre el chat dinámico con el docente
         btnCitar.setOnClickListener(v -> {
             if (!listaProfesores.isEmpty()) {
                 UsuarioModel p = listaProfesores.get(indexActual);
@@ -66,6 +63,13 @@ public class HomeEstudiante extends AppCompatActivity {
         configurarNavegacion();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Verifica si hay pendientes únicamente al volver a enfocar la pantalla principal
+        verificarCalificacionesPendientes();
+    }
+
     private void initViews() {
         tvSaludo = findViewById(R.id.tvSaludoHome);
         tvNombreProf = findViewById(R.id.tvNombreProfesor);
@@ -78,7 +82,6 @@ public class HomeEstudiante extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottomNavigation);
     }
 
-    // NUEVO MÉTODO: Cuenta salas únicas con pendientes y actualiza el BottomNav reactivamente
     private void configurarBadgeMensajesGlobal() {
         if (uidLogueado == null) return;
 
@@ -86,7 +89,6 @@ public class HomeEstudiante extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 int salasConMensajesNuevos = 0;
-
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     String idSala = ds.getKey();
                     if (idSala != null && idSala.contains(uidLogueado)) {
@@ -109,7 +111,6 @@ public class HomeEstudiante extends AppCompatActivity {
                     }
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         };
@@ -117,16 +118,27 @@ public class HomeEstudiante extends AppCompatActivity {
     }
 
     private void verificarCalificacionesPendientes() {
+        if (uidLogueado == null) return;
+
+        // CORREGIDO: addListenerForSingleValueEvent para evitar ejecuciones fantasmas por caché local
         mDatabase.child("CalificacionesPendientes").child(uidLogueado)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            String idProf = snapshot.child("idProfesor").getValue(String.class);
-                            Intent i = new Intent(HomeEstudiante.this, Calificar.class);
-                            i.putExtra("idProfesor", idProf);
-                            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                            startActivity(i);
+                        if (snapshot.exists() && snapshot.hasChildren()) {
+                            for (DataSnapshot asesoriaSnap : snapshot.getChildren()) {
+                                String idAsesoriaUnica = asesoriaSnap.getKey();
+                                String idProf = asesoriaSnap.child("idProfesor").getValue(String.class);
+
+                                if (idProf != null && idAsesoriaUnica != null) {
+                                    Intent i = new Intent(HomeEstudiante.this, Calificar.class);
+                                    i.putExtra("idProfesor", idProf);
+                                    i.putExtra("idChatAsesoria", idAsesoriaUnica);
+                                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                    startActivity(i);
+                                    break; // Procesa estrictamente de uno en uno
+                                }
+                            }
                         }
                     }
                     @Override
@@ -198,14 +210,10 @@ public class HomeEstudiante extends AppCompatActivity {
 
     private void actualizarInterfazTarjeta() {
         UsuarioModel p = listaProfesores.get(indexActual);
-
         tvNombreProf.setText("Ing. " + p.getNombre() + " " + p.getApellido());
 
         if (p.getFotoUrl() != null && !p.getFotoUrl().isEmpty()) {
-            Glide.with(this)
-                    .load(p.getFotoUrl())
-                    .placeholder(R.drawable.usuario)
-                    .into(imgProfesor);
+            Glide.with(this).load(p.getFotoUrl()).placeholder(R.drawable.usuario).into(imgProfesor);
         } else {
             imgProfesor.setImageResource(R.drawable.usuario);
         }
@@ -219,7 +227,6 @@ public class HomeEstudiante extends AppCompatActivity {
         if (p.getEstadisticas() != null) {
             long completadas = p.getEstadisticas().getCitasCompletadas();
             float sumaCalificaciones = p.getEstadisticas().getSumaCalificaciones();
-
             float promedio = completadas > 0 ? (sumaCalificaciones / completadas) : 0f;
             ratingBar.setRating(promedio);
         } else {

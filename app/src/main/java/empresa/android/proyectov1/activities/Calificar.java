@@ -1,10 +1,13 @@
 package empresa.android.proyectov1.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
+import android.view.View;
+import androidx.activity.OnBackPressedCallback; // Importante para el nuevo bloqueo
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
@@ -19,7 +22,7 @@ public class Calificar extends AppCompatActivity {
     private MaterialButton btnEnviar, btnOmitir;
     private TextView tvNombre;
     private ImageView ivFoto;
-    private String idProfesor, idEstudiante;
+    private String idProfesor, idEstudiante, idChatAsesoria;
     private DatabaseReference mDatabase;
 
     @Override
@@ -29,7 +32,9 @@ public class Calificar extends AppCompatActivity {
 
         mDatabase = FirebaseDatabase.getInstance().getReference();
         idEstudiante = FirebaseAuth.getInstance().getUid();
+
         idProfesor = getIntent().getStringExtra("idProfesor");
+        idChatAsesoria = getIntent().getStringExtra("idChatAsesoria");
 
         tvNombre = findViewById(R.id.tvNombreProfCalificar);
         ivFoto = findViewById(R.id.ivFotoCalificar);
@@ -37,10 +42,22 @@ public class Calificar extends AppCompatActivity {
         btnEnviar = findViewById(R.id.btnEnviarCalificacion);
         btnOmitir = findViewById(R.id.btnOmitir);
 
+        // OBLIGATORIO: Ocultamos el botón omitir para forzar la calificación
+        if (btnOmitir != null) {
+            btnOmitir.setVisibility(View.GONE);
+        }
+
+        // SOLUCIÓN MODERNA PARA BLOQUEAR EL BOTÓN FÍSICO DE ATRÁS
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Toast.makeText(Calificar.this, "Debes calificar la asesoría para continuar", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         cargarDatosProfesor();
 
         btnEnviar.setOnClickListener(v -> enviarNota());
-        btnOmitir.setOnClickListener(v -> finalizarYBorrarAlerta());
     }
 
     private void cargarDatosProfesor() {
@@ -114,15 +131,30 @@ public class Calificar extends AppCompatActivity {
     }
 
     private void finalizarYBorrarAlerta() {
-        // CORREGIDO: Aseguramos borrar usando el ID exacto del estudiante logueado (idEstudiante)
-        mDatabase.child("CalificacionesPendientes").child(idEstudiante).removeValue()
-                .addOnSuccessListener(aVoid -> {
-                    // Solo cuando Firebase confirme el borrado físico del nodo, se cierra la pantalla
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    btnEnviar.setEnabled(true);
-                    finish();
+        if (idChatAsesoria == null || idChatAsesoria.isEmpty()) {
+            irAlHome();
+            return;
+        }
+
+        // 1. Cambiamos el estado del chat a "leido" para que los listeners no vuelvan a disparar la calificación
+        mDatabase.child("Chats").child(idChatAsesoria).child("estado").setValue("leido")
+                .addOnCompleteListener(task -> {
+                    // 2. Tras asegurar que el chat ya no está "finalizado", borramos la alerta de pendientes
+                    mDatabase.child("CalificacionesPendientes")
+                            .child(idEstudiante)
+                            .child(idChatAsesoria)
+                            .removeValue()
+                            .addOnCompleteListener(task1 -> {
+                                // 3. Redirigimos al Home de forma segura
+                                irAlHome();
+                            });
                 });
+    }
+
+    private void irAlHome() {
+        Intent intent = new Intent(Calificar.this, HomeEstudiante.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
 }

@@ -40,6 +40,9 @@ public class Chat extends AppCompatActivity {
     private ValueEventListener chatStatusListener;
     private ChildEventListener mensajesListener;
 
+    // CONTROL DE CACHÉ: Evita que estados antiguos fuercen la pantalla de calificación al abrir el chat
+    private boolean lecturaInicial = true;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,10 +65,7 @@ public class Chat extends AppCompatActivity {
         if (fotoReceptor != null && !fotoReceptor.isEmpty()) {
             ivFoto.setPadding(0, 0, 0, 0);
             ivFoto.setImageTintList(null);
-            Glide.with(this)
-                    .load(fotoReceptor)
-                    .placeholder(R.drawable.usuario)
-                    .into(ivFoto);
+            Glide.with(this).load(fotoReceptor).placeholder(R.drawable.usuario).into(ivFoto);
         } else {
             ivFoto.setImageResource(R.drawable.usuario);
         }
@@ -174,7 +174,7 @@ public class Chat extends AppCompatActivity {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                                         long pendientesReceptor = 0;
-                                        if(snapshot.exists() && snapshot.getValue() != null){
+                                        if (snapshot.exists() && snapshot.getValue() != null) {
                                             pendientesReceptor = (long) snapshot.getValue();
                                         }
 
@@ -182,12 +182,14 @@ public class Chat extends AppCompatActivity {
                                         updateChat.put("ultimoMensaje", texto);
                                         updateChat.put("timestamp", tiempo);
                                         updateChat.put("estado", "activo");
-                                        updateChat.put("emisorUid", idEmisor); // MODIFICADO: Registramos quién envió el último mensaje
+                                        updateChat.put("emisorUid", idEmisor);
                                         updateChat.put("noLeidos_" + idReceptor, pendientesReceptor + 1);
 
                                         mDatabase.child("Chats").child(idChat).updateChildren(updateChat);
                                     }
-                                    @Override public void onCancelled(@NonNull DatabaseError error) {}
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {}
                                 });
                     });
         }
@@ -220,37 +222,88 @@ public class Chat extends AppCompatActivity {
     }
 
     private void setupChatStatusListener() {
-        chatStatusListener = new ValueEventListener() {
+        if (!"estudiante".equals(rolUsuario)) return;
+
+        DatabaseReference refEstado = mDatabase.child("Chats").child(idChat).child("estado");
+
+        refEstado.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     String estado = snapshot.getValue(String.class);
-                    if ("finalizado".equals(estado) && "estudiante".equals(rolUsuario)) {
-                        mDatabase.child("Chats").child(idChat).child("estado").removeEventListener(chatStatusListener);
-                        abrirCalificacion();
+                    if ("finalizado".equals(estado)) {
+                        // Si ya estaba finalizado, limpiamos el estado y enviamos a calificar
+                        refEstado.setValue("leido").addOnSuccessListener(aVoid -> abrirCalificacion());
+                        return;
                     }
                 }
+
+                // 2. Solo si el estado es normal, activamos el listener en tiempo real por si se finaliza mientras chateamos
+                chatStatusListener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            String estado = snapshot.getValue(String.class);
+                            if ("finalizado".equals(estado)) {
+                                // Desenganchar inmediatamente antes de proceder para evitar ejecuciones fantasma
+                                refEstado.removeEventListener(this);
+                                chatStatusListener = null;
+
+                                refEstado.setValue("leido").addOnSuccessListener(aVoid -> abrirCalificacion());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                };
+                refEstado.addValueEventListener(chatStatusListener);
             }
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        };
-        mDatabase.child("Chats").child(idChat).child("estado").addValueEventListener(chatStatusListener);
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     private void finalizarAsesoria() {
+        btnFinalizar.setEnabled(false);
+        btnFinalizar.setText("PROCESANDO...");
+
         mDatabase.child("Chats").child(idChat).child("estado").setValue("finalizado")
                 .addOnSuccessListener(aVoid -> {
                     Map<String, Object> calif = new HashMap<>();
                     calif.put("idProfesor", idEmisor);
-                    mDatabase.child("CalificacionesPendientes").child(idReceptor).setValue(calif)
-                            .addOnSuccessListener(unused -> finish());
+                    calif.put("idChatAsesoria", idChat);
+
+                    mDatabase.child("CalificacionesPendientes")
+                            .child(idReceptor)
+                            .child(idChat)
+                            .setValue(calif)
+                            .addOnSuccessListener(unused -> {
+                                btnFinalizar.setText("ASESORÍA FINALIZADA");
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                btnFinalizar.setEnabled(true);
+                                btnFinalizar.setText("TERMINAR");
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    btnFinalizar.setEnabled(true);
+                    btnFinalizar.setText("TERMINAR");
                 });
     }
 
     private void abrirCalificacion() {
-        mDatabase.child("Chats").child(idChat).child("estado").setValue("leido");
-        Intent i = new Intent(this, Calificar.class);
+        if (chatStatusListener != null) {
+            mDatabase.child("Chats").child(idChat).child("estado").removeEventListener(chatStatusListener);
+            chatStatusListener = null;
+        }
+
+        Intent i = new Intent(Chat.this, Calificar.class);
         i.putExtra("idProfesor", idReceptor);
-        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        i.putExtra("idChatAsesoria", idChat);
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(i);
         finish();
     }
