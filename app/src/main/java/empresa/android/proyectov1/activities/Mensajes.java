@@ -20,7 +20,7 @@ import empresa.android.proyectov1.R;
 import empresa.android.proyectov1.adapters.ChatAdapter;
 import empresa.android.proyectov1.models.ChatModel;
 
-public class Mensajes extends AppCompatActivity {
+public class Mensajes extends BaseActivity {
 
     private BottomNavigationView bottomNav;
     private RecyclerView rvChats;

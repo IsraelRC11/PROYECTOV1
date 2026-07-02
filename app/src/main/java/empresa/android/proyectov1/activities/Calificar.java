@@ -2,36 +2,32 @@ package empresa.android.proyectov1.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
-import android.widget.ImageView;
 import android.widget.Toast;
-import android.view.View;
-import androidx.activity.OnBackPressedCallback; // Importante para el nuevo bloqueo
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 import java.util.Calendar;
 import empresa.android.proyectov1.R;
 
-public class Calificar extends AppCompatActivity {
+public class Calificar extends BaseActivity {
     private RatingBar rbEstrellas;
     private MaterialButton btnEnviar, btnOmitir;
     private TextView tvNombre;
     private ImageView ivFoto;
-    private String idProfesor, idEstudiante, idChatAsesoria;
-    private DatabaseReference mDatabase;
+    private String idProfesor, idChatAsesoria;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calificar);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference();
-        idEstudiante = FirebaseAuth.getInstance().getUid();
+        // Variables mDatabaseRef y currentUid ya inicializadas por BaseActivity
 
         idProfesor = getIntent().getStringExtra("idProfesor");
         idChatAsesoria = getIntent().getStringExtra("idChatAsesoria");
@@ -61,7 +57,7 @@ public class Calificar extends AppCompatActivity {
     }
 
     private void cargarDatosProfesor() {
-        mDatabase.child("Usuarios").child(idProfesor).addListenerForSingleValueEvent(new ValueEventListener() {
+        mDatabaseRef.child("Usuarios").child(idProfesor).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
@@ -93,7 +89,7 @@ public class Calificar extends AppCompatActivity {
         int mesActual = Calendar.getInstance().get(Calendar.MONTH);
         final String stringMes = String.valueOf(mesActual);
 
-        DatabaseReference refProfesor = mDatabase.child("Usuarios").child(idProfesor);
+        DatabaseReference refProfesor = mDatabaseRef.child("Usuarios").child(idProfesor);
 
         refProfesor.runTransaction(new Transaction.Handler() {
             @NonNull
@@ -137,11 +133,11 @@ public class Calificar extends AppCompatActivity {
         }
 
         // 1. Cambiamos el estado del chat a "leido" para que los listeners no vuelvan a disparar la calificación
-        mDatabase.child("Chats").child(idChatAsesoria).child("estado").setValue("leido")
+        mDatabaseRef.child("Chats").child(idChatAsesoria).child("estado").setValue("leido")
                 .addOnCompleteListener(task -> {
                     // 2. Tras asegurar que el chat ya no está "finalizado", borramos la alerta de pendientes
-                    mDatabase.child("CalificacionesPendientes")
-                            .child(idEstudiante)
+                    mDatabaseRef.child("CalificacionesPendientes")
+                            .child(currentUid)
                             .child(idChatAsesoria)
                             .removeValue()
                             .addOnCompleteListener(task1 -> {

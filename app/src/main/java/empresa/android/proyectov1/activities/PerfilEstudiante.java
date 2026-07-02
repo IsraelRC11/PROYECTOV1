@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import empresa.android.proyectov1.R;
 
-public class PerfilEstudiante extends AppCompatActivity {
+public class PerfilEstudiante extends BaseActivity {
 
     private ImageView ivPerfil, btnEditarDatos;
     private TextView tvNombre;
@@ -95,6 +95,7 @@ public class PerfilEstudiante extends AppCompatActivity {
         });
 
         btnLogout.setOnClickListener(v -> {
+            mDatabase.child("Usuarios").child(uid).child("estado").setValue("offline");
             FirebaseAuth.getInstance().signOut();
             Intent i = new Intent(this, Login.class);
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -309,17 +310,7 @@ public class PerfilEstudiante extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mDatabase.child("Usuarios").child(uid).child("estado").setValue("online");
-    }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mDatabase.child("Usuarios").child(uid).child("estado").setValue("offline");
-    }
 
     @Override
     protected void onDestroy() {

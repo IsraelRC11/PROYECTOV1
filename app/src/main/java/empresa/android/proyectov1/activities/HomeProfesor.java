@@ -32,7 +32,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import empresa.android.proyectov1.R;
 
-public class HomeProfesor extends AppCompatActivity {
+public class HomeProfesor extends BaseActivity {
 
     private TextView tvSaludo, tvSesiones;
     private ChipGroup cgDisponibilidad;
@@ -58,6 +58,7 @@ public class HomeProfesor extends AppCompatActivity {
         cargarDisponibilidadHoraria();
         configurarBadgeMensajesGlobal(); // NUEVO: Escucha global de chats con mensajes nuevos
         configurarNavegacion();
+        configurarDesconexionAutomatica();
     }
 
     private void initViews() {
@@ -290,17 +291,7 @@ public class HomeProfesor extends AppCompatActivity {
         builder.show();
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mDatabase.child("Usuarios").child(uidLogueado).child("estado").setValue("online");
-    }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mDatabase.child("Usuarios").child(uidLogueado).child("estado").setValue("offline");
-    }
 
     private void configurarNavegacion() {
         bottomNav.setSelectedItemId(R.id.nav_home);

@@ -24,7 +24,7 @@ import empresa.android.proyectov1.R;
 import empresa.android.proyectov1.adapters.MensajeAdapter;
 import empresa.android.proyectov1.models.MensajeModel;
 
-public class Chat extends AppCompatActivity {
+public class Chat extends BaseActivity {
     private TextView tvNombre, tvEstado;
     private ImageView btnRegresar, ivFoto;
     private RecyclerView rvMensajes;

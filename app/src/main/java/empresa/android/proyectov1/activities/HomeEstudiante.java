@@ -18,7 +18,7 @@ import java.util.List;
 import empresa.android.proyectov1.R;
 import empresa.android.proyectov1.models.UsuarioModel;
 
-public class HomeEstudiante extends AppCompatActivity {
+public class HomeEstudiante extends BaseActivity {
 
     private TextView tvSaludo, tvNombreProf, tvEspecialidades, tvHorarios;
     private ShapeableImageView imgProfesor;
@@ -61,6 +61,7 @@ public class HomeEstudiante extends AppCompatActivity {
         });
 
         configurarNavegacion();
+        configurarDesconexionAutomatica();
     }
 
     @Override
@@ -146,17 +147,7 @@ public class HomeEstudiante extends AppCompatActivity {
                 });
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mDatabase.child("Usuarios").child(uidLogueado).child("estado").setValue("online");
-    }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mDatabase.child("Usuarios").child(uidLogueado).child("estado").setValue("offline");
-    }
 
     private void obtenerDatosEstudiante() {
         mDatabase.child("Usuarios").child(uidLogueado)
